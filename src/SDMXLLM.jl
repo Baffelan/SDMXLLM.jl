@@ -3,7 +3,7 @@ module SDMXLLM
 # Load all dependencies at package level
 using SDMX
 using PromptingTools
-using HTTP, JSON3, DataFrames, CSV, Statistics, StatsBase, Dates, EzXML
+using HTTP, JSON3, DataFrames, CSV, Statistics, StatsBase, Dates, EzXML, YAML
 
 # Include all module files
 include("SDMXDataSources.jl")

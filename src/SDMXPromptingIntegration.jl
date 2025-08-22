@@ -106,15 +106,24 @@ end
 # =================== SETUP AND CONFIGURATION ===================
 
 """
-    setup_sdmx_llm(provider::Union{Symbol, LLMProvider}=:openai; model::String="", kwargs...)
+    setup_sdmx_llm(provider::Union{Symbol, LLMProvider}=:openai; model::String="", env_file::Union{String, Nothing}=nothing, kwargs...)
 
 Sets up PromptingTools.jl for SDMX tasks with provider-specific configurations.
 Supports all PromptingTools.jl providers with sensible defaults.
+Optionally loads API keys from a YAML .env file.
+
+# Arguments
+- `provider`: LLM provider (:openai, :anthropic, :ollama, etc.)
+- `model`: Model name (uses provider defaults if empty)
+- `env_file`: Path to YAML .env file containing API keys (optional)
 
 # Examples
 ```julia
 # OpenAI (default) - using symbols (recommended)
 setup_sdmx_llm(:openai)  # Uses gpt-4o by default
+
+# With API keys from .env file
+setup_sdmx_llm(:openai, env_file=".env")
 
 # Anthropic
 setup_sdmx_llm(:anthropic, model="claude-3-sonnet-20240229")
@@ -126,7 +135,12 @@ setup_sdmx_llm(:ollama, model="llama3")
 setup_sdmx_llm(MISTRAL, model="mistral-large")
 ```
 """
-function setup_sdmx_llm(provider::Union{Symbol, LLMProvider}=:openai; model::String="", kwargs...)
+function setup_sdmx_llm(provider::Union{Symbol, LLMProvider}=:openai; model::String="", env_file::Union{String, Nothing}=nothing, kwargs...)
+    # Load API keys from .env file if specified
+    if env_file !== nothing
+        _load_api_keys_from_env(env_file)
+    end
+    
     # Convert symbol to enum if needed
     provider_enum = isa(provider, Symbol) ? llm_provider(provider) : provider
     
@@ -138,6 +152,22 @@ function setup_sdmx_llm(provider::Union{Symbol, LLMProvider}=:openai; model::Str
     
     @info "SDMX LLM configured: provider=$provider_enum, model=$model"
     return provider_enum
+end
+
+# Load API keys from YAML .env file
+function _load_api_keys_from_env(env_file::String)
+    @assert isfile(env_file) "Environment file not found at: " * env_file
+    
+    config = YAML.load_file(env_file)
+    
+    # Set environment variables for PromptingTools.jl
+    for (key, value) in config
+        if endswith(key, "_API_KEY") || endswith(key, "_ENDPOINT")
+            ENV[key] = string(value)
+        end
+    end
+    
+    @info "API keys loaded from " * env_file
 end
 
 # Get default model for each provider
