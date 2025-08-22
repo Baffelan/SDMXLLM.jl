@@ -1,6 +1,6 @@
 name = "SDMXLLM"
-uuid = "a8a1c8b0-9b1f-4c8d-8e2a-1b1b1b1b1b1b"
-authors = ["The Julia Community"]
+uuid = "5bf9ff8a-8115-426c-8d6d-96131ecc5d37"
+authors = ["Giulio Valentino Dalla Riva <me@gvdallariva.net>"]
 version = "0.1.0"
 
 [deps]
