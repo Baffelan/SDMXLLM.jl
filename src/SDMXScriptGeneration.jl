@@ -19,7 +19,40 @@ export ScriptTemplate, TransformationStep, GeneratedScript, ScriptGenerator,
 """
     TransformationStep
 
-Represents a single step in the data transformation pipeline.
+Represents a single step in a data transformation pipeline for SDMX processing.
+
+This struct encapsulates all information needed to generate a single transformation
+operation in a Tidier.jl script, including the operation type, validation checks,
+and descriptive comments for the generated code.
+
+# Fields
+- `step_name::String`: Descriptive name for this transformation step
+- `operation_type::String`: Type of operation ("read", "mutate", "pivot", "filter", "validate", "write")
+- `tidier_function::String`: Tidier.jl function to use ("@mutate", "@pivot_longer", etc.)
+- `description::String`: Human-readable description of what this step does
+- `source_columns::Vector{String}`: Input columns required for this step
+- `target_columns::Vector{String}`: Output columns produced by this step
+- `transformation_logic::String`: The actual transformation code/expression
+- `validation_checks::Vector{String}`: Validation checks to include
+- `comments::Vector{String}`: Additional comments for code documentation
+
+# Examples
+```julia
+step = TransformationStep(
+    "Recode Country Values",
+    "mutate",
+    "@mutate",
+    "Maps source country names to SDMX GEO_PICT codes",
+    ["country_name"],
+    ["GEO_PICT"],
+    "GEO_PICT = recode(country_name, \"Tonga\" => \"TO\", \"Fiji\" => \"FJ\")",
+    ["@assert all(.!ismissing(GEO_PICT))"],
+    ["# Country name standardization for SDMX compliance"]
+)
+```
+
+# See also
+[`ScriptTemplate`](@ref), [`GeneratedScript`](@ref), [`build_transformation_steps`](@ref)
 """
 struct TransformationStep
     step_name::String

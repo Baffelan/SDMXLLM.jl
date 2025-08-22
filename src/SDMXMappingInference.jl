@@ -20,7 +20,21 @@ export MappingCandidate, MappingConfidence, AdvancedMappingResult, InferenceEngi
 """
     MappingConfidence
 
-Confidence levels for mapping suggestions.
+Enumeration of confidence levels for advanced mapping suggestions.
+
+This enum represents different confidence levels for data mapping inferences,
+from very low confidence requiring manual review to very high confidence
+suitable for automatic application.
+
+# Values
+- `VERY_LOW = 1`: 0-20% confidence - manual review required
+- `LOW = 2`: 20-40% confidence - careful validation needed  
+- `MEDIUM = 3`: 40-60% confidence - moderate confidence
+- `HIGH = 4`: 60-80% confidence - high confidence
+- `VERY_HIGH = 5`: 80-100% confidence - suitable for automation
+
+# See also
+[`MappingCandidate`](@ref), [`AdvancedMappingResult`](@ref)
 """
 @enum MappingConfidence begin
     VERY_LOW = 1    # 0-20% confidence
@@ -33,7 +47,38 @@ end
 """
     MappingCandidate
 
-A potential mapping between source and target columns with confidence assessment.
+A potential mapping between source and target columns with comprehensive assessment.
+
+This struct represents a candidate mapping discovered by the inference engine,
+including confidence scores, evidence supporting the mapping, and suggested
+transformations needed to implement the mapping.
+
+# Fields
+- `source_column::String`: Name of the source data column
+- `target_column::String`: Name of the target schema column
+- `confidence_score::Float64`: Numeric confidence score (0.0-1.0)
+- `confidence_level::MappingConfidence`: Categorized confidence level
+- `match_type::String`: Type of match ("exact", "fuzzy", "value_pattern", "statistical")
+- `evidence::Dict{String, Any}`: Supporting evidence for the mapping decision
+- `suggested_transformation::Union{String, Nothing}`: Code transformation needed
+- `validation_notes::Vector{String}`: Additional validation notes and warnings
+
+# Examples
+```julia
+candidate = MappingCandidate(
+    "country_name",
+    "GEO_PICT", 
+    0.85,
+    VERY_HIGH,
+    "fuzzy",
+    Dict("name_similarity" => 0.8, "value_analysis" => analysis),
+    "@mutate(GEO_PICT = recode(country_name, mapping...))",
+    ["High confidence country mapping"]
+)
+```
+
+# See also
+[`MappingConfidence`](@ref), [`AdvancedMappingResult`](@ref)
 """
 struct MappingCandidate
     source_column::String
@@ -85,10 +130,42 @@ mutable struct InferenceEngine
 end
 
 """
-    create_inference_engine(;fuzzy_threshold=0.6, min_confidence=0.3, 
-                           use_statistical_analysis=true, enable_learning=true) -> InferenceEngine
+    create_inference_engine(; kwargs...) -> InferenceEngine
 
-Creates a new inference engine with specified configuration.
+Creates a new advanced mapping inference engine with configurable parameters.
+
+This function initializes an inference engine that can learn from user feedback
+and apply multiple matching algorithms to discover data mappings between source
+datasets and SDMX schemas.
+
+# Arguments
+- `fuzzy_threshold::Float64=0.6`: Minimum score for fuzzy string matching
+- `min_confidence::Float64=0.3`: Minimum confidence threshold for mapping suggestions
+- `use_statistical_analysis::Bool=true`: Enable statistical compatibility analysis
+- `enable_learning::Bool=true`: Enable learning from user feedback
+
+# Returns
+- `InferenceEngine`: Configured inference engine ready for mapping analysis
+
+# Examples
+```julia
+# Create engine with default settings
+engine = create_inference_engine()
+
+# Create engine with custom thresholds
+engine = create_inference_engine(
+    fuzzy_threshold=0.8,
+    min_confidence=0.5,
+    use_statistical_analysis=true,
+    enable_learning=true
+)
+
+# Use the engine
+result = infer_advanced_mappings(engine, source_profile, target_schema, source_data)
+```
+
+# See also
+[`InferenceEngine`](@ref), [`infer_advanced_mappings`](@ref)
 """
 function create_inference_engine(;fuzzy_threshold=0.6, 
                                 min_confidence=0.3,
@@ -111,7 +188,36 @@ end
 """
     fuzzy_match_score(str1::String, str2::String) -> Float64
 
-Calculates fuzzy matching score between two strings using multiple algorithms.
+Calculates comprehensive fuzzy matching score between strings using multiple algorithms.
+
+This function combines multiple string similarity measures including Jaro-Winkler
+similarity, substring matching, token-based similarity, and semantic similarity
+to produce a comprehensive matching score for data mapping inference.
+
+# Arguments
+- `str1::String`: First string to compare
+- `str2::String`: Second string to compare
+
+# Returns
+- `Float64`: Similarity score between 0.0 (no match) and 1.0 (perfect match)
+
+# Examples
+```julia
+# Exact match
+score = fuzzy_match_score("country", "country")  # 1.0
+
+# Close match
+score = fuzzy_match_score("country_name", "geo_pict")  # ~0.3
+
+# Semantic match
+score = fuzzy_match_score("gender", "sex")  # ~0.5 (boosted by semantics)
+
+# Substring match
+score = fuzzy_match_score("time_period", "period")  # ~0.7
+```
+
+# See also
+[`analyze_value_patterns`](@ref), [`create_inference_engine`](@ref)
 """
 function fuzzy_match_score(str1::String, str2::String)
     # Normalize strings

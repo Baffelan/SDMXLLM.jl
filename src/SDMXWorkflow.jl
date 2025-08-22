@@ -31,7 +31,44 @@ export SDMXWorkflow, WorkflowStep, WorkflowConfig, WorkflowResult,
 """
     WorkflowStep
 
-Represents a single step in the SDMX transformation workflow.
+Represents a single step in the SDMX transformation workflow with execution tracking.
+
+This mutable struct tracks the execution state of individual workflow steps,
+including timing, status, results, and error handling for comprehensive
+workflow monitoring and debugging.
+
+# Fields
+- `step_id::String`: Unique identifier for this workflow step
+- `step_name::String`: Human-readable name of the step
+- `description::String`: Detailed description of what this step does
+- `status::String`: Current status ("pending", "running", "completed", "failed", "skipped")
+- `start_time::Union{DateTime, Nothing}`: When step execution started
+- `end_time::Union{DateTime, Nothing}`: When step execution finished
+- `duration_ms::Float64`: Execution duration in milliseconds
+- `input_data::Any`: Input data for this step
+- `output_data::Any`: Output data produced by this step
+- `error_message::String`: Error message if step failed
+- `warnings::Vector{String}`: Warning messages generated during execution
+- `metrics::Dict{String, Any}`: Performance and quality metrics
+- `auto_retry::Bool`: Whether to automatically retry on failure
+- `max_retries::Int`: Maximum number of retry attempts
+- `retry_count::Int`: Current retry attempt count
+
+# Examples
+```julia
+step = WorkflowStep(
+    "profile_source", "Data Profiling", "Analyze source data structure",
+    "pending", nothing, nothing, 0.0, source_data, nothing, "",
+    String[], Dict{String,Any}(), true, 3, 0
+)
+
+# Update step status
+step.status = "running"
+step.start_time = now()
+```
+
+# See also
+[`SDMXWorkflow`](@ref), [`WorkflowConfig`](@ref), [`execute_workflow`](@ref)
 """
 mutable struct WorkflowStep
     step_id::String

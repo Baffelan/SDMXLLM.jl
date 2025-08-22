@@ -80,7 +80,48 @@ const SDMX_PROVIDERS = Dict{Symbol, NamedTuple}(
 """
     CellRange
 
-Represents a range of cells in an Excel sheet.
+Represents a rectangular range of cells within an Excel sheet for data analysis and extraction.
+
+This struct defines a specific cell range within an Excel worksheet, including its boundaries,
+content type, and descriptive information. Used for identifying data regions, headers,
+metadata sections, and other structured content during Excel analysis.
+
+# Fields
+- `sheet_name::String`: Name of the Excel worksheet containing the range
+- `start_row::Int`: Starting row number of the cell range
+- `end_row::Int`: Ending row number of the cell range  
+- `start_col::Int`: Starting column number of the cell range
+- `end_col::Int`: Ending column number of the cell range
+- `description::String`: Human-readable description of the range content
+- `data_type::String`: Type classification ("header", "data", "metadata", "summary")
+
+# Examples
+```julia
+# Define a data range
+data_range = CellRange(
+    "Sheet1", 
+    2, 100,      # rows 2-100
+    1, 10,       # columns 1-10
+    "Main data table with observations",
+    "data"
+)
+
+# Define a header range
+header_range = CellRange(
+    "Sheet1",
+    1, 1,        # row 1 only
+    1, 10,       # columns 1-10
+    "Column headers for data table",
+    "header"
+)
+
+# Check range properties
+println("Range covers ", data_range.end_row - data_range.start_row + 1, " rows")
+println("Data type: ", data_range.data_type)
+```
+
+# See also
+[`SheetInfo`](@ref), [`ExcelAnalysis`](@ref), [`detect_data_ranges`](@ref)
 """
 struct CellRange
     sheet_name::String
@@ -110,7 +151,38 @@ end
 """
     ExcelAnalysis
 
-Comprehensive analysis of an Excel file structure.
+Comprehensive analysis of an Excel file structure for SDMX data transformation.
+
+This struct contains the results of analyzing an Excel file to understand its
+structure, detect data patterns, and identify the best approach for converting
+it to SDMX format. Used by LLM-enhanced transformation workflows.
+
+# Fields
+- `file_path::String`: Path to the analyzed Excel file
+- `sheets::Vector{SheetInfo}`: Analysis of each sheet in the workbook
+- `recommended_sheet::String`: Name of the sheet most suitable for data extraction
+- `recommended_ranges::Vector{CellRange}`: Suggested cell ranges containing data
+- `pivoting_detected::Bool`: Whether data appears to be in pivot table format
+- `pivot_analysis::Union{Dict, Nothing}`: Detailed pivot structure analysis if detected
+- `complexity_score::Float64`: Score (0-1) indicating transformation complexity
+- `transformation_hints::Vector{String}`: Suggested transformation strategies
+
+# Examples
+```julia
+# Typically created through analyze_excel_structure
+analysis = analyze_excel_structure("data.xlsx")
+
+# Access analysis results
+println("Recommended sheet: ", analysis.recommended_sheet)
+println("Complexity: ", analysis.complexity_score)
+println("Pivoting needed: ", analysis.pivoting_detected)
+
+# Use with LLM workflow
+script = generate_transformation_script(analysis, target_schema)
+```
+
+# See also
+[`analyze_excel_structure`](@ref), [`SheetInfo`](@ref), [`CellRange`](@ref)
 """
 struct ExcelAnalysis
     file_path::String
@@ -126,10 +198,50 @@ end
 # =================== UNIFIED SDMX LLM INTERFACE ===================
 
 """
-    sdmx_aigenerate(prompt::String; provider::Symbol=:ollama, model::String="", kwargs...)
+    sdmx_aigenerate(prompt::String; provider::Symbol=:ollama, model::String="", kwargs...) -> String
 
-Generate text using specified provider with SDMX-optimized settings.
-Uses PromptingTools.jl schemas for all supported providers.
+Generate text using specified LLM provider with SDMX-optimized settings.
+
+This function provides a unified interface for generating text using various LLM providers,
+with optimized settings for SDMX data transformation tasks. It automatically configures
+provider-specific parameters and handles authentication when needed.
+
+# Arguments
+- `prompt::String`: The input prompt for text generation
+- `provider::Symbol=:ollama`: LLM provider (:ollama, :openai, :anthropic, :azure_openai)
+- `model::String=""`: Specific model name (uses provider defaults if empty)
+- `kwargs...`: Additional provider-specific parameters
+
+# Returns
+- `String`: Generated text response from the LLM
+
+# Examples
+```julia
+# Basic usage with Ollama (local)
+response = sdmx_aigenerate("Explain SDMX data structure")
+
+# Use OpenAI with specific model
+response = sdmx_aigenerate(
+    "Generate mapping suggestions for this data",
+    provider=:openai,
+    model="gpt-4"
+)
+
+# Use with custom parameters
+response = sdmx_aigenerate(
+    prompt,
+    provider=:anthropic,
+    temperature=0.1,
+    max_tokens=1000
+)
+```
+
+# Throws
+- `ArgumentError`: If provider is not supported
+- `HTTP.ExceptionRequest.StatusError`: If API authentication fails
+
+# See also
+[`sdmx_aiextract`](@ref), [`setup_sdmx_llm`](@ref), [`generate_transformation_script`](@ref)
 """
 function sdmx_aigenerate(prompt::String; provider::Symbol=:ollama, model::String="", kwargs...)
     @assert !isempty(prompt) "Prompt cannot be empty"
@@ -247,10 +359,10 @@ function generate_transformation_script(mappings::String, schema_info;
         """
         
         Excel Analysis Context:
-        - Complexity Score: $(excel_analysis.complexity_score)
-        - Pivoting Detected: $(excel_analysis.pivoting_detected)
-        - Recommended Sheet: $(excel_analysis.recommended_sheet)
-        - Transformation Hints: $(join(excel_analysis.transformation_hints, "; "))
+        - Complexity Score: ", excel_analysis.complexity_score
+        - Pivoting Detected: ", excel_analysis.pivoting_detected
+        - Recommended Sheet: ", excel_analysis.recommended_sheet
+        - Transformation Hints: ", join(excel_analysis.transformation_hints, "; ")
         """
     else
         ""
