@@ -295,15 +295,18 @@ Infer optimal column mappings from source data to SDMX schema using LLM analysis
 function infer_sdmx_column_mappings(source_columns::Vector{String}, target_schema; 
                                    provider::Symbol=:ollama, model::String="")
     @assert !isempty(source_columns) "Source columns cannot be empty"
-    @assert haskey(target_schema, :dimensions) || isa(target_schema, DataflowSchema) "Invalid target schema"
     
-    # Extract schema information
-    if isa(target_schema, DataflowSchema)
+    # Extract schema information - handle both DataflowSchema and Dict
+    if hasfield(typeof(target_schema), :dimensions) && hasfield(typeof(target_schema), :measures)
+        # Handle DataflowSchema
         dimensions = target_schema.dimensions.dimension_id
         measures = target_schema.measures.measure_id
-    else
+    elseif isa(target_schema, Dict)
+        # Handle Dict format
         dimensions = target_schema[:dimensions]
         measures = get(target_schema, :measures, ["OBS_VALUE"])
+    else
+        error("Invalid target schema type: $(typeof(target_schema))")
     end
     
     prompt = """

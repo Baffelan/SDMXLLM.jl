@@ -20,6 +20,7 @@ This module provides streamlined AI-powered analysis using PromptingTools.jl:
     OLLAMA
     MISTRAL
     AZURE_OPENAI
+    GOOGLE
 end
 
 "Script generation styles"
@@ -36,6 +37,7 @@ function llm_provider(s::Symbol)::LLMProvider
     s === :ollama && return OLLAMA
     s === :mistral && return MISTRAL
     s === :azure_openai && return AZURE_OPENAI
+    s === :google && return GOOGLE
     error("Unknown LLM provider: $s")
 end
 
@@ -48,7 +50,7 @@ function script_style_enum(s::Symbol)::ScriptStyle
 end
 
 export LLMProvider, ScriptStyle, llm_provider, script_style_enum
-export OPENAI, ANTHROPIC, OLLAMA, MISTRAL, AZURE_OPENAI
+export OPENAI, ANTHROPIC, OLLAMA, MISTRAL, AZURE_OPENAI, GOOGLE
 export DATAFRAMES, TIDIER, MIXED
 export SDMXMappingResult, SDMXTransformationScript, ExcelStructureAnalysis
 export analyze_excel_with_ai, infer_column_mappings, generate_transformation_script
@@ -179,6 +181,7 @@ function _get_default_model(provider::LLMProvider, model::String)::String
     provider === OLLAMA && return "llama3.1:8b"
     provider === MISTRAL && return "mistral-large"
     provider === AZURE_OPENAI && return "gpt-4o"
+    provider === GOOGLE && return "gemini-2.5-flash"
     
     return ""
 end

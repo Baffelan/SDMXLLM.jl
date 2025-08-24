@@ -25,7 +25,7 @@ export CSVSource, ExcelSource, URLSource, DataFrameSource
 
 # LLM Provider Configuration - Enumeration types for LLM providers and output styles
 export LLMProvider, ScriptStyle
-export OPENAI, ANTHROPIC, OLLAMA, MISTRAL, AZURE_OPENAI
+export OPENAI, ANTHROPIC, OLLAMA, MISTRAL, AZURE_OPENAI, GOOGLE
 export DATAFRAMES, TIDIER, MIXED
 
 # Result & Analysis Types - Data structures for LLM analysis results and transformations

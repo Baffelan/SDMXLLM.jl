@@ -17,14 +17,17 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [weakdeps]
-XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
-OpenAI = "e9f21f70-7185-4079-abb2-f84d60a39d84"
+GoogleGenAI = "903d41d1-eaca-47dd-943b-fee3930375ab"
 Llama = "cf710eda-36f8-4e2c-91a4-6b3b3b6b3b6b"
+OpenAI = "e9f21f70-7185-4079-abb2-f84d60a39d84"
+XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [extensions]
 SDMXExcelExt = "XLSX"
-SDMXOpenAIExt = "OpenAI"
+SDMXGoogleGenAIExt = "GoogleGenAI"
 SDMXLlamaExt = "Llama"
+SDMXOpenAIExt = "OpenAI"
 
 [compat]
+GoogleGenAI = "0.5.1"
 julia = "1"
