@@ -13,30 +13,68 @@ The `SDMXLLM.jl` package provides the following features:
 
 ## Configuration
 
-To use the LLM features, you need to configure an LLM provider. This is done using the `setup_llm_config` function.
-
-### Example: Using a local Ollama model
-
-```julia
-using SDMXLLM
-
-# Set up a configuration for a local Ollama model
-ollama_config = setup_llm_config(SDMXLLM.OLLAMA, model="llama2")
-
-# You can now use this configuration with other functions in the package
-# For example, to create a script generator:
-script_generator = create_script_generator(ollama_config)
-```
+To use the LLM features, you need to configure an LLM provider using the `setup_sdmx_llm` function.
 
 ### Supported Providers
 
-The following LLM providers are supported:
-- `SDMXLLM.OLLAMA`
-- `SDMXLLM.OPENAI`
-- `SDMXLLM.ANTHROPIC`
-- `SDMXLLM.AZURE_OPENAI`
+SDMXLLM supports multiple LLM providers through PromptingTools.jl:
+- `:ollama` - Local Ollama models
+- `:openai` - OpenAI GPT models  
+- `:anthropic` - Anthropic Claude models
+- `:google` - Google Gemini models
+- `:mistral` - Mistral AI models
+- `:groq` - Groq fast inference
+- `:azure_openai` - Azure OpenAI service
 
-For cloud providers like OpenAI, you will need to set the appropriate API key as an environment variable (e.g., `OPENAI_API_KEY`).
+### API Key Configuration
+
+For cloud providers, you need to set API keys. There are two methods:
+
+#### Method 1: Environment Variables (Recommended for Google)
+```julia
+# IMPORTANT: For Google AI, set the API key BEFORE importing packages
+ENV["GOOGLE_API_KEY"] = "your-api-key-here"
+
+using SDMXLLM
+setup_sdmx_llm(:google, model="gemini-1.5-flash")
+```
+
+#### Method 2: Using .env File
+Create a `.env` file in YAML format:
+```yaml
+GOOGLE_API_KEY: "your-google-api-key"
+OPENAI_API_KEY: "your-openai-api-key"
+ANTHROPIC_API_KEY: "your-anthropic-api-key"
+```
+
+Then load it:
+```julia
+using SDMXLLM
+setup_sdmx_llm(:openai, env_file=".env")
+```
+
+**⚠️ Important Note for Google AI Users:**
+Due to how GoogleGenAI.jl initializes, the `GOOGLE_API_KEY` environment variable must be set BEFORE importing SDMXLLM. The `.env` file loading will work for future imports but not for the current session. For Google AI, we recommend setting the environment variable directly in your script or shell before starting Julia.
+
+### Example Usage
+
+```julia
+# For local Ollama
+using SDMXLLM
+setup_sdmx_llm(:ollama, model="llama3")
+
+# For OpenAI (with env var already set)
+using SDMXLLM
+setup_sdmx_llm(:openai, model="gpt-4o")
+
+# For Google (requires env var before import)
+ENV["GOOGLE_API_KEY"] = "your-key"
+using SDMXLLM
+setup_sdmx_llm(:google, model="gemini-1.5-flash")
+
+# Use the configured provider
+response = sdmx_aigenerate("Your prompt here", provider=:google)
+```
 
 ## Available Functions
 

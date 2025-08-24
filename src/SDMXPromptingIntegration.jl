@@ -115,26 +115,48 @@ Supports all PromptingTools.jl providers with sensible defaults.
 Optionally loads API keys from a YAML .env file.
 
 # Arguments
-- `provider`: LLM provider (:openai, :anthropic, :ollama, etc.)
+- `provider`: LLM provider (:openai, :anthropic, :ollama, :google, etc.)
 - `model`: Model name (uses provider defaults if empty)
 - `env_file`: Path to YAML .env file containing API keys (optional)
+
+# Important Note for Google AI
+⚠️ **Google AI Requirement**: The `GOOGLE_API_KEY` environment variable must be set 
+BEFORE importing SDMXLLM. The `.env` file loading will set the variable for future 
+imports but cannot affect already-loaded GoogleGenAI.jl.
+
+```julia
+# Correct usage for Google:
+ENV["GOOGLE_API_KEY"] = "your-api-key"
+using SDMXLLM
+setup_sdmx_llm(:google)
+```
 
 # Examples
 ```julia
 # OpenAI (default) - using symbols (recommended)
 setup_sdmx_llm(:openai)  # Uses gpt-4o by default
 
-# With API keys from .env file
+# With API keys from .env file (works for most providers)
 setup_sdmx_llm(:openai, env_file=".env")
+
+# Google Gemini (requires ENV var before import)
+ENV["GOOGLE_API_KEY"] = "your-key"
+using SDMXLLM
+setup_sdmx_llm(:google, model="gemini-1.5-flash")
 
 # Anthropic
 setup_sdmx_llm(:anthropic, model="claude-3-sonnet-20240229")
 
 # Local Ollama
 setup_sdmx_llm(:ollama, model="llama3")
+```
 
-# Using enum directly
-setup_sdmx_llm(MISTRAL, model="mistral-large")
+# .env File Format
+The .env file should be in YAML format:
+```yaml
+GOOGLE_API_KEY: "your-google-api-key"
+OPENAI_API_KEY: "your-openai-api-key"
+ANTHROPIC_API_KEY: "your-anthropic-api-key"
 ```
 """
 function setup_sdmx_llm(provider::Union{Symbol, LLMProvider}=:openai; model::String="", env_file::Union{String, Nothing}=nothing, kwargs...)
@@ -146,13 +168,21 @@ function setup_sdmx_llm(provider::Union{Symbol, LLMProvider}=:openai; model::Str
     # Convert symbol to enum if needed
     provider_enum = isa(provider, Symbol) ? llm_provider(provider) : provider
     
+    # Special warning for Google provider
+    if provider_enum === GOOGLE && !haskey(ENV, "GOOGLE_API_KEY")
+        @warn "GOOGLE_API_KEY not found in environment!" * 
+              "\n  Google AI requires the API key to be set BEFORE importing SDMXLLM." *
+              "\n  Please use the init_sdmx_google.jl helper script or set ENV[\"GOOGLE_API_KEY\"] before import." *
+              "\n  See the README for detailed instructions."
+    end
+    
     # Set provider-specific defaults optimized for SDMX tasks
     model = _get_default_model(provider_enum, model)
     
     # Configure PromptingTools.jl model alias
     !isempty(model) && (PromptingTools.MODEL_ALIASES["sdmx_model"] = model)
     
-    @info "SDMX LLM configured: provider=$provider_enum, model=$model"
+    @info "SDMX LLM configured: provider=" * string(provider_enum) * ", model=" * model
     return provider_enum
 end
 
