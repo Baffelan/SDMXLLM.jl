@@ -1,11 +1,17 @@
 # SDMXLLM.jl
 
-[![Julia](https://img.shields.io/badge/julia-1.11+-blue.svg)](https://julialang.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-61%20passing-success)](test/)
-[![Dependency](https://img.shields.io/badge/requires-SDMX.jl-blue)](../SDMX.jl)
+[![Build Status](https://github.com/yourusername/julia_sdmx/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/yourusername/julia_sdmx/actions/workflows/CI.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/yourusername/julia_sdmx/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/julia_sdmx)
+[![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
+[![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
 
 LLM-powered extension for SDMX.jl that adds intelligent data transformation capabilities. Use Large Language Models to analyze complex data structures, generate transformation scripts, and orchestrate end-to-end SDMX conversion workflows.
+
+## Requirements
+
+- Julia 1.11 or higher
+- SDMX.jl package (see [../SDMX.jl](../SDMX.jl))
+- See [Project.toml](Project.toml) for full dependencies
 
 ## Features
 

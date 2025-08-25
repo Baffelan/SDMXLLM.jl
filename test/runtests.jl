@@ -8,6 +8,11 @@ using Dates
 
 @testset "SDMXLLM.jl Tests" begin
     
+    # Run Aqua quality checks first
+    @testset "Code Quality (Aqua.jl)" begin
+        include("aqua.jl")
+    end
+    
     @testset "LLM Integration" begin
         # Test LLM configuration setup
         ollama_config = setup_sdmx_llm(:ollama; model="llama2")
