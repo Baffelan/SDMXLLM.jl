@@ -29,7 +29,6 @@ export DATAFRAMES, TIDIER, MIXED
 
 # Result & Analysis Types - Data structures for LLM analysis results and transformations
 export SDMXMappingResult, SDMXTransformationScript, ExcelStructureAnalysis
-export ExcelStructureAnalysis, SheetInfo, CellRange
 export SDMXStructuralContext, DataSourceContext, TransformationContext
 export MappingCandidate, MappingConfidence, AdvancedMappingResult, InferenceEngine
 export ScriptTemplate, TransformationStep, GeneratedScript, ScriptGenerator
