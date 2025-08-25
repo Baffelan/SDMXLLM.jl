@@ -8,8 +8,6 @@ and all complex transformation scenarios.
 
 # Dependencies loaded at package level
 
-export build_transformation_context, generate_enhanced_transformation_script
-export create_code_mapping_instructions, create_pivoting_instructions, create_range_selection_instructions
 
 # =================== TRANSFORMATION CONTEXT BUILDER ===================
 

@@ -8,7 +8,6 @@ using HTTP, JSON3, DataFrames, CSV, Statistics, StatsBase, Dates, EzXML, YAML
 # Include all module files
 include("SDMXDataSources.jl")
 include("SDMXPromptingIntegration.jl")
-include("SDMXLLMIntegration.jl")
 include("SDMXMetadataContext.jl")
 include("SDMXEnhancedTransformation.jl")
 include("SDMXMappingInference.jl")
@@ -30,7 +29,7 @@ export DATAFRAMES, TIDIER, MIXED
 
 # Result & Analysis Types - Data structures for LLM analysis results and transformations
 export SDMXMappingResult, SDMXTransformationScript, ExcelStructureAnalysis
-export ExcelAnalysis, SheetInfo, CellRange
+export ExcelStructureAnalysis, SheetInfo, CellRange
 export SDMXStructuralContext, DataSourceContext, TransformationContext
 export MappingCandidate, MappingConfidence, AdvancedMappingResult, InferenceEngine
 export ScriptTemplate, TransformationStep, GeneratedScript, ScriptGenerator
@@ -53,7 +52,6 @@ export sdmx_aigenerate, sdmx_aiextract
 
 # === EXCEL ANALYSIS ===
 # Specialized functions for analyzing Excel file structures and data layouts
-export analyze_excel_structure, extract_excel_metadata, detect_data_ranges, analyze_pivoting_needs
 export analyze_excel_with_ai
 
 # === MAPPING & INFERENCE ===
@@ -65,9 +63,8 @@ export fuzzy_match_score, analyze_value_patterns, detect_hierarchical_relationsh
 
 # === SCRIPT GENERATION ===
 # Functions for generating Tidier.jl/DataFrames.jl transformation scripts
-export generate_transformation_script, create_script_generator, get_script_templates
-export build_transformation_steps, create_template_prompt, validate_generated_script
-export add_custom_template, preview_script_output
+export generate_transformation_script, generate_transformation_script_text, create_script_generator
+export build_transformation_steps, validate_generated_script, preview_script_output
 
 # === CONTEXT & METADATA ===
 # Functions for extracting and building context for LLM-enhanced transformations
@@ -83,8 +80,6 @@ export build_sdmx_context_section, build_source_analysis_section, build_code_map
 
 # === WORKFLOW ORCHESTRATION ===
 # High-level workflow management for end-to-end SDMX data transformation pipelines
-export create_workflow, execute_workflow, add_custom_step, get_workflow_status
-export save_workflow_state, load_workflow_state, generate_workflow_report
-export batch_process_datasets, create_automated_pipeline, ai_sdmx_workflow
+export create_workflow, execute_workflow, generate_workflow_report, ai_sdmx_workflow
 
 end # module SDMXLLM

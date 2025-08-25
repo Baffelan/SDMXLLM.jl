@@ -8,9 +8,6 @@ to build comprehensive context for intelligent transformation script generation.
 
 # Dependencies loaded at package level
 
-export SDMXStructuralContext, DataSourceContext, TransformationContext
-export extract_structural_context, extract_data_source_context, build_transformation_context
-export generate_enhanced_transformation_script
 
 # =================== CONTEXT STRUCTURES ===================
 
@@ -59,7 +56,7 @@ struct DataSourceContext
     data_shape::NamedTuple  # Dimensions, pivoting needs, etc.
     
     # Excel-specific analysis
-    excel_structure::Union{ExcelAnalysis, Nothing}
+    excel_structure::Union{ExcelStructureAnalysis, Nothing}
     sheet_analysis::Dict{String, NamedTuple}
     
     # Detected patterns

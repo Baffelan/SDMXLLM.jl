@@ -12,10 +12,6 @@ This module provides intelligent mapping between source data and SDMX schemas us
 
 # Dependencies loaded at package level
 
-export MappingCandidate, MappingConfidence, AdvancedMappingResult, InferenceEngine,
-       create_inference_engine, infer_advanced_mappings, validate_mapping_quality,
-       suggest_value_transformations, analyze_mapping_coverage, learn_from_feedback,
-       fuzzy_match_score, analyze_value_patterns, detect_hierarchical_relationships
 
 """
     MappingConfidence

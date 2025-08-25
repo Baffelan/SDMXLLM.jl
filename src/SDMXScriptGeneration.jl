@@ -11,10 +11,6 @@ This module generates executable Julia transformation scripts using:
 
 # Dependencies loaded at package level
 
-export ScriptTemplate, TransformationStep, GeneratedScript, ScriptGenerator,
-       create_script_generator, generate_transformation_script, get_script_templates,
-       build_transformation_steps, create_template_prompt, validate_generated_script,
-       add_custom_template, preview_script_output
 
 """
     TransformationStep
@@ -134,7 +130,7 @@ script = generator(profile, schema, mappings; template_name="pivot_transformatio
 function (generator::ScriptGenerator)(profile::SourceDataProfile, 
                                     schema::DataflowSchema, 
                                     mappings::AdvancedMappingResult,
-                                    excel_analysis::Union{ExcelAnalysis, Nothing}=nothing;
+                                    excel_analysis::Union{ExcelStructureAnalysis, Nothing}=nothing;
                                     template_name::String="",
                                     custom_instructions::String="")
     return generate_transformation_script(generator, profile, schema, mappings, excel_analysis; 
@@ -146,7 +142,7 @@ end
 function (generator::ScriptGenerator)(source::DataSource,
                                     schema::DataflowSchema,
                                     mappings::AdvancedMappingResult,
-                                    excel_analysis::Union{ExcelAnalysis, Nothing}=nothing;
+                                    excel_analysis::Union{ExcelStructureAnalysis, Nothing}=nothing;
                                     kwargs...)
     data = read_data(source)
     source_info_dict = source_info(source)
@@ -444,7 +440,7 @@ end
                                  source_profile::SourceDataProfile,
                                  target_schema::DataflowSchema,
                                  mapping_result::AdvancedMappingResult,
-                                 excel_analysis::Union{ExcelAnalysis, Nothing} = nothing;
+                                 excel_analysis::Union{ExcelStructureAnalysis, Nothing} = nothing;
                                  template_name::String = "",
                                  custom_instructions::String = "") -> GeneratedScript
 
@@ -454,7 +450,7 @@ function generate_transformation_script(generator::ScriptGenerator,
                                        source_profile::SourceDataProfile,
                                        target_schema::DataflowSchema,
                                        mapping_result::AdvancedMappingResult,
-                                       excel_analysis::Union{ExcelAnalysis, Nothing} = nothing;
+                                       excel_analysis::Union{ExcelStructureAnalysis, Nothing} = nothing;
                                        template_name::String = "",
                                        custom_instructions::String = "")
     
@@ -502,14 +498,14 @@ end
 """
     select_template(generator::ScriptGenerator, 
                    source_profile::SourceDataProfile,
-                   excel_analysis::Union{ExcelAnalysis, Nothing},
+                   excel_analysis::Union{ExcelStructureAnalysis, Nothing},
                    template_name::String) -> ScriptTemplate
 
 Selects the most appropriate template based on data characteristics.
 """
 function select_template(generator::ScriptGenerator, 
                         source_profile::SourceDataProfile,
-                        excel_analysis::Union{ExcelAnalysis, Nothing},
+                        excel_analysis::Union{ExcelStructureAnalysis, Nothing},
                         template_name::String)
     
     # Use specified template if provided
@@ -671,7 +667,7 @@ end
                                       target_schema::DataflowSchema,
                                       mapping_result::AdvancedMappingResult,
                                       transformation_steps::Vector{TransformationStep},
-                                      excel_analysis::Union{ExcelAnalysis, Nothing},
+                                      excel_analysis::Union{ExcelStructureAnalysis, Nothing},
                                       custom_instructions::String) -> NamedTuple
 
 Creates comprehensive prompts for LLM script generation.
@@ -682,7 +678,7 @@ function create_comprehensive_script_prompt(generator::ScriptGenerator,
                                            target_schema::DataflowSchema,
                                            mapping_result::AdvancedMappingResult,
                                            transformation_steps::Vector{TransformationStep},
-                                           excel_analysis::Union{ExcelAnalysis, Nothing},
+                                           excel_analysis::Union{ExcelStructureAnalysis, Nothing},
                                            custom_instructions::String)
     
     system_prompt = """You are an expert Julia developer specializing in data transformation using Tidier.jl and SDMX standards. 

@@ -7,10 +7,6 @@ leveraging Julia's multiple dispatch for clean, extensible data ingestion.
 
 # Dependencies loaded at package level
 
-export DataSource, FileSource, NetworkSource, MemorySource,
-       CSVSource, ExcelSource, URLSource, DataFrameSource,
-       read_data, source_info, validate_source
-
 # =================== ABSTRACT TYPE HIERARCHY ===================
 
 """
