@@ -23,7 +23,7 @@ OpenAI = "e9f21f70-7185-4079-abb2-f84d60a39d84"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [extensions]
-SDMXExcelExt = "XLSX"
+SDMXLLMExcelExt = "XLSX"
 SDMXGoogleGenAIExt = "GoogleGenAI"
 SDMXLlamaExt = "Llama"
 SDMXOpenAIExt = "OpenAI"
