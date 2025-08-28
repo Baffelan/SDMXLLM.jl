@@ -319,13 +319,15 @@ function execute_workflow(workflow::SDMXWorkflow)
             
             # Report progress if callback is provided
             if workflow.progress_callback !== nothing
-                workflow.progress_callback(i, length(workflow.steps), step.step_name, step.status)
+                workflow.progress_callback(i, length(workflow.steps), 
+                                          step.step_name, step.status)
             end
         end
         
         # Determine overall status
         if workflow.status != "failed"
-            failed_critical_steps = sum(s.status == "failed" for s in workflow.steps if !s.auto_retry)
+            failed_critical_steps = sum(s.status == "failed" 
+                                        for s in workflow.steps if !s.auto_retry)
             if failed_critical_steps == 0
                 workflow.status = "success"
             else
@@ -388,7 +390,8 @@ function execute_workflow_step!(workflow::SDMXWorkflow, step::WorkflowStep)
         step.end_time = now()
         step.duration_ms = (step.end_time - step.start_time).value
         
-        log_info(workflow, "Completed step: $(step.step_name) ($(round(step.duration_ms/1000, digits=2))s)")
+        duration_s = round(step.duration_ms/1000, digits = 2)
+        log_info(workflow, "Completed step: " * step.step_name * " (" * string(duration_s) * "s)")
         
     catch e
         step.status = "failed"
@@ -401,7 +404,8 @@ function execute_workflow_step!(workflow::SDMXWorkflow, step::WorkflowStep)
         # Retry logic
         if step.auto_retry && step.retry_count < step.max_retries
             step.retry_count += 1
-            log_info(workflow, "Retrying step: $(step.step_name) (attempt $(step.retry_count))")
+            log_info(workflow, "Retrying step: " * step.step_name * 
+                     " (attempt " * string(step.retry_count) * ")")
             
             # Wait before retry
             sleep(2^step.retry_count)  # Exponential backoff
@@ -436,7 +440,9 @@ function execute_source_analysis_step!(workflow::SDMXWorkflow, step::WorkflowSte
     
     # Quality warnings
     if source_profile.data_quality_score < 0.8
-        push!(step.warnings, "Source data quality is below recommended threshold ($(round(source_profile.data_quality_score*100, digits=1))%)")
+        quality_pct = round(source_profile.data_quality_score*100, digits = 1)
+        push!(step.warnings, "Source data quality is below recommended threshold (" * 
+              string(quality_pct) * "%)")
     end
     
     if source_profile.row_count > 100000 && !config.performance_mode
@@ -582,8 +588,8 @@ function execute_validation_step!(workflow::SDMXWorkflow, step::WorkflowStep)
     if workflow.validator === nothing
         workflow.validator = create_validator(
             target_schema;
-            strict_mode=workflow.config.strict_validation,
-            performance_mode=workflow.config.performance_mode
+            strict_mode = workflow.config.strict_validation,
+            performance_mode = workflow.config.performance_mode
         )
     end
     

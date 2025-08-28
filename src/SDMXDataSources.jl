@@ -61,12 +61,12 @@ struct CSVSource <: FileSource
     
     # Inner constructor with sensible defaults
     function CSVSource(path::String; 
-                      delimiter::Char=',', 
-                      encoding::String="UTF-8",
-                      header_row::Int=1,
-                      skip_rows::Int=0)
-        isfile(path) || throw(ArgumentError("File not found: $path"))
-        endswith(lowercase(path), ".csv") || @warn "File does not have .csv extension: $path"
+                      delimiter::Char = ',', 
+                      encoding::String = "UTF-8",
+                      header_row::Int = 1,
+                      skip_rows::Int = 0)
+        isfile(path) || throw(ArgumentError("File not found: " * path))
+        endswith(lowercase(path), ".csv") || @warn "File does not have .csv extension: " * path
         new(path, delimiter, encoding, header_row, skip_rows)
     end
 end
@@ -92,7 +92,7 @@ struct ExcelSource <: FileSource
                         sheet::Union{String, Int}=1,
                         range::Union{String, Nothing}=nothing,
                         header_row::Int=1)
-        isfile(path) || throw(ArgumentError("File not found: $path"))
+        isfile(path) || throw(ArgumentError("File not found: " * path))
         ext = lowercase(splitext(path)[2])
         ext in [".xlsx", ".xls"] || throw(ArgumentError("File must be Excel format (.xlsx/.xls): $path"))
         new(path, sheet, range, header_row)
