@@ -12,6 +12,180 @@ This module provides intelligent mapping between source data and SDMX schemas us
 
 # Dependencies loaded at package level
 
+# =================== UNIFIED MAPPING INTERFACE ===================
+
+"""
+    infer_mappings(source_data, target_schema; method=:heuristic, kwargs...) -> Dict{String, Vector{String}}
+
+Unified interface for inferring column mappings between source data and SDMX schema.
+
+This function provides a single entry point for all mapping inference methods,
+from simple heuristics to advanced LLM-powered analysis. It dispatches to the
+appropriate underlying implementation based on the specified method.
+
+# Arguments
+- `source_data`: Can be a DataFrame, SourceDataProfile, or file path
+- `target_schema`: DataflowSchema defining the SDMX structure
+- `method::Symbol=:heuristic`: Mapping method to use
+  - `:heuristic` - Basic name matching and type-based inference (fast, no external dependencies)
+  - `:fuzzy` - Advanced fuzzy matching with statistical analysis
+  - `:llm` - LLM-powered mapping using configured AI provider
+  - `:advanced` - Combination of all methods with confidence scoring
+
+# Keyword Arguments
+- `llm_provider::Symbol=:ollama`: LLM provider for AI methods (:openai, :anthropic, :ollama)
+- `llm_model::String=""`: Specific model to use (provider-dependent)
+- `confidence_threshold::Float64=0.5`: Minimum confidence for fuzzy/advanced methods
+- `max_suggestions::Int=3`: Maximum number of suggestions per target column
+- `use_codelists::Bool=true`: Whether to use codelist validation in advanced method
+- `verbose::Bool=false`: Print progress information
+
+# Returns
+- `Dict{String, Vector{String}}`: Maps SDMX column names to ranked source column suggestions
+
+# Examples
+```julia
+# Basic heuristic mapping
+mappings = infer_mappings(my_data, schema)
+
+# LLM-powered mapping
+mappings = infer_mappings(my_data, schema; 
+    method=:llm,
+    llm_provider=:openai,
+    llm_model="gpt-4")
+
+# Advanced mapping with all techniques
+mappings = infer_mappings(my_data, schema;
+    method=:advanced,
+    confidence_threshold=0.7,
+    use_codelists=true)
+
+# Use with source profile
+profile = profile_source_data(my_data)
+mappings = infer_mappings(profile, schema; method=:fuzzy)
+```
+"""
+function infer_mappings(source_data, target_schema::DataflowSchema; 
+                       method::Symbol=:heuristic,
+                       llm_provider::Symbol=:ollama,
+                       llm_model::String="",
+                       confidence_threshold::Float64=0.5,
+                       max_suggestions::Int=3,
+                       use_codelists::Bool=true,
+                       verbose::Bool=false,
+                       kwargs...)
+    
+    # Prepare source profile if needed
+    source_profile = if isa(source_data, SourceDataProfile)
+        source_data
+    elseif isa(source_data, DataFrame)
+        profile_source_data(source_data)
+    elseif isa(source_data, AbstractString)
+        df = read_source_data(source_data)
+        profile_source_data(df, source_data)
+    else
+        throw(ArgumentError("source_data must be DataFrame, SourceDataProfile, or file path"))
+    end
+    
+    # Dispatch based on method
+    if method == :heuristic
+        verbose && println("Using heuristic mapping method...")
+        return suggest_column_mappings(source_profile, target_schema)
+        
+    elseif method == :fuzzy
+        verbose && println("Using fuzzy matching method...")
+        engine = create_inference_engine(; 
+            confidence_threshold=confidence_threshold,
+            use_fuzzy_matching=true,
+            use_value_matching=false,
+            use_llm=false)
+        
+        # Get source DataFrame if needed
+        df = isa(source_data, DataFrame) ? source_data : read_source_data(source_profile.file_path)
+        result = infer_advanced_mappings(engine, source_profile, target_schema, df)
+        return _format_mapping_result(result, max_suggestions)
+        
+    elseif method == :llm
+        verbose && println("Using LLM mapping method with " * string(llm_provider) * "...")
+        
+        # Get source DataFrame if needed
+        df = isa(source_data, DataFrame) ? source_data : 
+             !isempty(source_profile.file_path) ? read_source_data(source_profile.file_path) :
+             error("Need DataFrame for LLM mapping")
+        
+        # Use existing LLM mapping function
+        if llm_provider == :ollama || isempty(string(llm_provider))
+            result = infer_column_mappings(df, target_schema; model=llm_model)
+        else
+            source_columns = names(df)
+            result_text = infer_sdmx_column_mappings(source_columns, target_schema; 
+                                                    provider=llm_provider, 
+                                                    model=llm_model)
+            # Parse text result into Dict format
+            result = _parse_llm_mapping_text(result_text, source_columns, target_schema)
+        end
+        return result
+        
+    elseif method == :advanced
+        verbose && println("Using advanced mapping with all techniques...")
+        engine = create_inference_engine(;
+            confidence_threshold=confidence_threshold,
+            use_fuzzy_matching=true,
+            use_value_matching=use_codelists,
+            use_llm=(llm_provider != :none),
+            llm_provider=llm_provider,
+            llm_model=llm_model)
+        
+        # Get source DataFrame if needed
+        df = isa(source_data, DataFrame) ? source_data : read_source_data(source_profile.file_path)
+        result = infer_advanced_mappings(engine, source_profile, target_schema, df)
+        return _format_mapping_result(result, max_suggestions)
+        
+    else
+        throw(ArgumentError("Unknown mapping method: " * string(method) * 
+                          ". Use :heuristic, :fuzzy, :llm, or :advanced"))
+    end
+end
+
+# Helper to parse LLM text response into Dict format
+function _parse_llm_mapping_text(text::String, source_columns::Vector{String}, 
+                                target_schema::DataflowSchema)
+    mappings = Dict{String, Vector{String}}()
+    
+    # Get all target columns
+    all_targets = vcat(
+        target_schema.dimensions.dimension_id,
+        target_schema.time_dimension !== nothing ? [target_schema.time_dimension.dimension_id] : String[],
+        target_schema.measures.measure_id,
+        target_schema.attributes.attribute_id
+    )
+    
+    # Simple parsing: look for patterns like "target_col -> source_col"
+    lines = split(text, '\n')
+    for line in lines
+        if occursin("->", line) || occursin("=>", line) || occursin(":", line)
+            parts = split(line, r"->|=>|:")
+            if length(parts) == 2
+                target = strip(parts[1])
+                source = strip(parts[2])
+                
+                # Clean up common formatting
+                target = replace(target, r"^[-*•]\s*" => "")
+                source = replace(source, r"[,;]$" => "")
+                
+                if target in all_targets && source in source_columns
+                    if !haskey(mappings, target)
+                        mappings[target] = String[]
+                    end
+                    push!(mappings[target], source)
+                end
+            end
+        end
+    end
+    
+    return mappings
+end
+
 
 """
     MappingConfidence
@@ -100,6 +274,26 @@ struct AdvancedMappingResult
     quality_score::Float64
     recommendations::Vector{String}
     transformation_complexity::Float64
+end
+
+# Helper to format AdvancedMappingResult to Dict
+function _format_mapping_result(result::AdvancedMappingResult, max_suggestions::Int)
+    mappings = Dict{String, Vector{String}}()
+    
+    for candidate in result.mappings
+        target_col = candidate.target_column
+        source_col = candidate.source_column
+        
+        if !haskey(mappings, target_col)
+            mappings[target_col] = String[]
+        end
+        
+        if length(mappings[target_col]) < max_suggestions
+            push!(mappings[target_col], source_col)
+        end
+    end
+    
+    return mappings
 end
 
 """
