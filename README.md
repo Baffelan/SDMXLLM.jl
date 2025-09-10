@@ -22,6 +22,12 @@ Extension package for SDMX.jl that provides LLM-powered data transformation and 
 - **Excel Analysis**: Multi-sheet workbook structure understanding
 - **Pattern Recognition**: Hierarchical relationship detection
 
+## Philosophy
+
+The package makes some (radical?) design choices. Two of these are:
+-  user does not need to know SDMX REST api syntax. _As much as possible_ the package works starting from the developer API query link given by the .Stat Data Explorer.
+-  AI and LLMs in particular are used to provide draft code, that the user can integrate, rather than answers. The usage of SDMX data in many Official Statistics or critically important activities encourage a careful usage of generative AI.
+
 ## Installation
 
 ```julia
