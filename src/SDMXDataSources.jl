@@ -232,6 +232,51 @@ function read_data(source::DataFrameSource)
     return copy(source.data)  # Return a copy to avoid mutations
 end
 
+# =================== CONVENIENCE FUNCTIONS ===================
+
+"""
+    read_source_data(file_path::String; sheet = 1, header_row = 1) -> DataFrame
+
+Convenience function to read data from CSV or Excel files.
+
+This function provides a simple interface for reading data files,
+automatically detecting the file type based on extension.
+
+# Arguments
+- `file_path::String`: Path to the data file
+- `sheet = 1`: Excel sheet number or name (ignored for CSV)
+- `header_row = 1`: Row number containing column headers
+
+# Returns
+- `DataFrame`: The loaded data
+
+# Examples
+```julia
+# CSV files
+df = read_source_data("data.csv")
+
+# Excel files
+df = read_source_data("data.xlsx"; sheet = "Sheet1", header_row = 2)
+```
+"""
+function read_source_data(file_path::String; sheet = 1, header_row = 1)
+    if !isfile(file_path)
+        error("File not found: " * file_path)
+    end
+    
+    file_ext = lowercase(splitext(file_path)[2])
+    
+    if file_ext == ".csv"
+        source = CSVSource(file_path; header_row = header_row)
+        return read_data(source)
+    elseif file_ext in [".xlsx", ".xls"]
+        source = ExcelSource(file_path; sheet = sheet, header_row = header_row)
+        return read_data(source)
+    else
+        error("Unsupported file format: " * file_ext * ". Supported formats: .csv, .xlsx/.xls")
+    end
+end
+
 # =================== UTILITY FUNCTIONS ===================
 
 """

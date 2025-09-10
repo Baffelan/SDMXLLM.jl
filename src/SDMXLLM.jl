@@ -3,10 +3,11 @@ module SDMXLLM
 # Load all dependencies at package level
 using SDMX
 using PromptingTools
-using HTTP, JSON3, DataFrames, CSV, Statistics, StatsBase, Dates, EzXML, YAML
+using HTTP, JSON3, DataFrames, CSV, Statistics, StatsBase, Dates, EzXML, YAML, XLSX
 
 # Include all module files
 include("SDMXDataSources.jl")
+include("SDMXDataProfiling.jl")
 include("SDMXPromptingIntegration.jl")
 include("SDMXMetadataContext.jl")
 include("SDMXEnhancedTransformation.jl")
@@ -42,7 +43,13 @@ export SDMX_PROVIDERS
 
 # === DATA SOURCE OPERATIONS ===
 # Functions for reading and validating data from various source types
-export read_data, source_info, validate_source, data_source
+export read_data, source_info, validate_source, data_source, read_source_data
+
+# === DATA PROFILING ===
+# Types and functions for comprehensive data profiling and analysis
+export ColumnProfile, SourceDataProfile
+export profile_source_data, profile_column, detect_column_type_and_patterns
+export print_source_profile, suggest_column_mappings
 
 # === LLM INTEGRATION CORE ===
 # Core functions for setting up and interfacing with various LLM providers
@@ -55,6 +62,7 @@ export analyze_excel_with_ai
 
 # === MAPPING & INFERENCE ===
 # Advanced mapping inference using fuzzy matching and LLM-enhanced suggestions
+export infer_mappings  # New unified API
 export infer_column_mappings, infer_sdmx_column_mappings, infer_advanced_mappings
 export create_inference_engine, validate_mapping_quality
 export suggest_value_transformations, analyze_mapping_coverage, learn_from_feedback
